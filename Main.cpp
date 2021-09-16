@@ -4,8 +4,8 @@
 #include <string>
 
 #ifndef G_CONST_GLOBAL_VARIABLES
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 245*3;
+const int SCREEN_HEIGHT = 189*3;
 const int KEY_PRESS_SURFACE_TOTAL = 4;
 #endif G_CONST_GLOBAL_VARIABLES
 
@@ -19,7 +19,6 @@ SDL_Surface* KeyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
 
 #ifndef G_FUNCTION_SIGNATURES
 bool Initialize();
-bool LoadMedia(std::string filename);
 void Close();
 SDL_Surface* LoadSurface(std::string path);
 #endif
@@ -32,7 +31,9 @@ int main(int argc, char* argv[])
 {
 	if (Initialize())
 	{
-		if (LoadMedia("./assets/HelloWorld.bmp"))
+		CurrentImageSurface = LoadSurface("./assets/focusing.gif");
+
+		if (CurrentImageSurface != NULL)
 		{
 			bool quit = false;
 
@@ -83,8 +84,13 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-
-				SDL_BlitSurface(CurrentImageSurface, NULL, ScreenSurface, NULL);
+				// Apply the image stretched
+				SDL_Rect stretchRect;
+				stretchRect.x = 0;
+				stretchRect.y = 0;
+				stretchRect.w = SCREEN_WIDTH;
+				stretchRect.h = SCREEN_HEIGHT;
+				SDL_BlitScaled(CurrentImageSurface, NULL, ScreenSurface, &stretchRect);
 
 				SDL_UpdateWindowSurface(Window);
 			}
@@ -134,19 +140,32 @@ bool Initialize()
 	return success;
 }
 
-bool LoadMedia(std::string filename)
+SDL_Surface* LoadSurface(std::string path)
 {
-	bool success = true;
+	SDL_Surface* optimizedSurface = NULL;
 
-	CurrentImageSurface = IMG_Load(filename.c_str());
-
-	if (CurrentImageSurface == NULL)
+	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+	
+	if (loadedSurface != NULL) 
 	{
-		printf("Unable to load image %s, SDL_Error: %s\n", filename, IMG_GetError());
-		success = false;
+		optimizedSurface = SDL_ConvertSurface(loadedSurface, ScreenSurface->format, 0);
+
+		if (optimizedSurface != NULL)
+		{
+			SDL_FreeSurface(loadedSurface);
+			loadedSurface = NULL;
+		}
+		else
+		{
+			printf("Unable to convert %s to ScreenSurface format! SDL_Error: %s\n", path.c_str(), SDL_GetError());
+		}
+	}
+	else
+	{
+		printf("Unable to load %s! IMG_Error: %s\n", path.c_str(), IMG_GetError());
 	}
 
-	return success;
+	return optimizedSurface;
 }
 
 void Close()
@@ -159,5 +178,6 @@ void Close()
 	Window = NULL;
 
 	// Step 7. Quit life
+	IMG_Quit();
 	SDL_Quit();
 }
