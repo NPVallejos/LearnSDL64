@@ -83,11 +83,30 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-				// Clear screeb
+				// Clear screen
+				SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(Renderer);
 
-				// Render Texture to screen
-				SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
+				// Lets render a red fill rectangle
+				SDL_Rect fillRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 }; // { x-coordinate, y-coordinate, width, height };
+				SDL_SetRenderDrawColor(Renderer, 0xFF, 0x00, 0x00, 0xFF); // (r, g, b, a) - it's set to red with full opacity
+				SDL_RenderFillRect(Renderer, &fillRect);
+
+				// Lets render a green outline of a rectangle now
+				SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6, SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
+				SDL_SetRenderDrawColor(Renderer, 0x00, 0xFF, 0x00, 0xFF);
+				SDL_RenderDrawRect(Renderer, &outlineRect);
+
+				// Lets draw a blue line
+				SDL_SetRenderDrawColor(Renderer, 0x00, 0x00, 0xFF, 0xFF);
+				SDL_RenderDrawLine(Renderer, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+
+				// Lets draw a yellow dotted line
+				SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0x00, 0xFF);
+				for (int i = 0; i < SCREEN_HEIGHT; i += 2)
+				{
+					SDL_RenderDrawPoint(Renderer, SCREEN_WIDTH/2, i);
+				}
 
 				// Updates our screen
 				SDL_RenderPresent(Renderer);
