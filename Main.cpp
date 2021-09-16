@@ -4,8 +4,8 @@
 #include <string>
 
 #ifndef G_CONST_GLOBAL_VARIABLES
-const int SCREEN_WIDTH = 245;
-const int SCREEN_HEIGHT = 189;
+const int SCREEN_WIDTH = 933;
+const int SCREEN_HEIGHT = 923;
 const int KEY_PRESS_SURFACE_TOTAL = 4;
 #endif G_CONST_GLOBAL_VARIABLES
 
@@ -20,6 +20,7 @@ SDL_Texture* CurrentTexture = NULL;
 bool Initialize();
 void Close();
 SDL_Texture* LoadTexture(std::string path);
+void RenderSomeRectangles(SDL_Rect* Viewport);
 #endif
 
 #ifndef G_INPUT_ENUMERATORS
@@ -30,7 +31,7 @@ int main(int argc, char* argv[])
 {
 	if (Initialize())
 	{
-		CurrentTexture = LoadTexture("./assets/focusing.gif");
+		CurrentTexture = LoadTexture("./assets/NickVallejosAlbumCover.png");
 
 		if (CurrentTexture != NULL)
 		{
@@ -83,30 +84,26 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
+
 				// Clear screen
 				SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(Renderer);
+				
+				// Let's Create Viewport 1 and Set Renderer to Viewport1
+				SDL_Rect topLeftViewport = {0, 0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2}; // {origin x, origin y, width, height}
+				SDL_RenderSetViewport(Renderer, &topLeftViewport);
+				RenderSomeRectangles(&topLeftViewport);
 
-				// Lets render a red fill rectangle
-				SDL_Rect fillRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 }; // { x-coordinate, y-coordinate, width, height };
-				SDL_SetRenderDrawColor(Renderer, 0xFF, 0x00, 0x00, 0xFF); // (r, g, b, a) - it's set to red with full opacity
-				SDL_RenderFillRect(Renderer, &fillRect);
+				// Viewport 2 - let's render an image
+				SDL_Rect topRightViewport = { SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+				SDL_RenderSetViewport(Renderer, &topRightViewport);
+				SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
 
-				// Lets render a green outline of a rectangle now
-				SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6, SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
-				SDL_SetRenderDrawColor(Renderer, 0x00, 0xFF, 0x00, 0xFF);
-				SDL_RenderDrawRect(Renderer, &outlineRect);
-
-				// Lets draw a blue line
-				SDL_SetRenderDrawColor(Renderer, 0x00, 0x00, 0xFF, 0xFF);
-				SDL_RenderDrawLine(Renderer, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
-
-				// Lets draw a yellow dotted line
-				SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0x00, 0xFF);
-				for (int i = 0; i < SCREEN_HEIGHT; i += 2)
-				{
-					SDL_RenderDrawPoint(Renderer, SCREEN_WIDTH/2, i);
-				}
+				// Viewport 3 - Let's render rectangles over our image
+				SDL_Rect bottomViewport = { 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2 };
+				SDL_RenderSetViewport(Renderer, &bottomViewport);
+				SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
+				RenderSomeRectangles(&bottomViewport);
 
 				// Updates our screen
 				SDL_RenderPresent(Renderer);
@@ -125,6 +122,30 @@ int main(int argc, char* argv[])
 	Close();
 
 	return 0;
+}
+
+void RenderSomeRectangles(SDL_Rect* Viewport)
+{
+	// Lets render a red fill rectangle
+	SDL_Rect fillRect = { Viewport->w / 4, Viewport->h / 4, Viewport->w / 2, Viewport->h / 2 }; // { x-coordinate, y-coordinate, width, height };
+	SDL_SetRenderDrawColor(Renderer, 0xFF, 0x00, 0x00, 0xFF); // (r, g, b, a) - it's set to red with full opacity
+	SDL_RenderFillRect(Renderer, &fillRect);
+
+	// Lets render a green outline of a rectangle now
+	SDL_Rect outlineRect = { Viewport->w / 6, Viewport->h / 6, Viewport->w * 2 / 3, Viewport->h * 2 / 3 };
+	SDL_SetRenderDrawColor(Renderer, 0x00, 0xFF, 0x00, 0xFF);
+	SDL_RenderDrawRect(Renderer, &outlineRect);
+
+	// Lets draw a blue line
+	SDL_SetRenderDrawColor(Renderer, 0x00, 0x00, 0xFF, 0xFF);
+	SDL_RenderDrawLine(Renderer, 0, Viewport->h / 2, Viewport->w, Viewport->h / 2);
+
+	// Lets draw a yellow dotted line
+	SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0x00, 0xFF);
+	for (int i = 0; i < Viewport->h; i += 2)
+	{
+		SDL_RenderDrawPoint(Renderer, Viewport->w / 2, i);
+	}
 }
 
 bool Initialize()
