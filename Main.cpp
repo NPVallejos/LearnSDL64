@@ -4,23 +4,22 @@
 #include <string>
 
 #ifndef G_CONST_GLOBAL_VARIABLES
-const int SCREEN_WIDTH = 245*3;
-const int SCREEN_HEIGHT = 189*3;
+const int SCREEN_WIDTH = 245;
+const int SCREEN_HEIGHT = 189;
 const int KEY_PRESS_SURFACE_TOTAL = 4;
 #endif G_CONST_GLOBAL_VARIABLES
 
 // Step 0. Declare our SDL Window and SDL Surfaces
 #ifndef G_SDL_VARIABLES
 SDL_Window* Window = NULL;
-SDL_Surface* ScreenSurface = NULL;
-SDL_Surface* CurrentImageSurface = NULL;
-SDL_Surface* KeyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
+SDL_Renderer* Renderer = NULL;
+SDL_Texture* CurrentTexture = NULL;
 #endif
 
 #ifndef G_FUNCTION_SIGNATURES
 bool Initialize();
 void Close();
-SDL_Surface* LoadSurface(std::string path);
+SDL_Texture* LoadTexture(std::string path);
 #endif
 
 #ifndef G_INPUT_ENUMERATORS
@@ -31,9 +30,9 @@ int main(int argc, char* argv[])
 {
 	if (Initialize())
 	{
-		CurrentImageSurface = LoadSurface("./assets/focusing.gif");
+		CurrentTexture = LoadTexture("./assets/focusing.gif");
 
-		if (CurrentImageSurface != NULL)
+		if (CurrentTexture != NULL)
 		{
 			bool quit = false;
 
@@ -84,20 +83,19 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-				// Apply the image stretched
-				SDL_Rect stretchRect;
-				stretchRect.x = 0;
-				stretchRect.y = 0;
-				stretchRect.w = SCREEN_WIDTH;
-				stretchRect.h = SCREEN_HEIGHT;
-				SDL_BlitScaled(CurrentImageSurface, NULL, ScreenSurface, &stretchRect);
+				// Clear screeb
+				SDL_RenderClear(Renderer);
 
-				SDL_UpdateWindowSurface(Window);
+				// Render Texture to screen
+				SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
+
+				// Updates our screen
+				SDL_RenderPresent(Renderer);
 			}
 		}
 		else
 		{
-			printf("Failed to load media!\n");
+			printf("Failed to load texture!\n");
 		}
 	}
 	else
@@ -132,32 +130,44 @@ bool Initialize()
 		}
 		else
 		{
-			// Step 3. Initialize our SDL surface
-			ScreenSurface = SDL_GetWindowSurface(Window);
+			// Step 3. Initialize our renderer
+			Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
+
+			if (Renderer == NULL)
+			{
+				printf("Renderer could not be created! SDL_Error: %s\n", IMG_GetError());
+				success = false;
+			}
+			else
+			{
+				// Set screen color to white
+				SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+				// Optionally, initialize SDL_image here
+			}
 		}
 	}
 
 	return success;
 }
 
-SDL_Surface* LoadSurface(std::string path)
+SDL_Texture* LoadTexture(std::string path)
 {
-	SDL_Surface* optimizedSurface = NULL;
-
+	SDL_Texture* texture = NULL;
 	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
 	
 	if (loadedSurface != NULL) 
 	{
-		optimizedSurface = SDL_ConvertSurface(loadedSurface, ScreenSurface->format, 0);
+		texture = SDL_CreateTextureFromSurface(Renderer, loadedSurface);
 
-		if (optimizedSurface != NULL)
+		if (texture != NULL)
 		{
 			SDL_FreeSurface(loadedSurface);
 			loadedSurface = NULL;
 		}
 		else
 		{
-			printf("Unable to convert %s to ScreenSurface format! SDL_Error: %s\n", path.c_str(), SDL_GetError());
+			printf("Unable to create texture from surface! SDL_Error: %s\n", SDL_GetError());
 		}
 	}
 	else
@@ -165,17 +175,19 @@ SDL_Surface* LoadSurface(std::string path)
 		printf("Unable to load %s! IMG_Error: %s\n", path.c_str(), IMG_GetError());
 	}
 
-	return optimizedSurface;
+	return texture;
 }
 
 void Close()
 {
 	// Step 6. Clean up, clean up, everybody clean up
-	SDL_FreeSurface(CurrentImageSurface);
-	CurrentImageSurface = NULL;
+	SDL_DestroyTexture(CurrentTexture);
+	CurrentTexture = NULL;
 
+	SDL_DestroyRenderer(Renderer);
 	SDL_DestroyWindow(Window);
 	Window = NULL;
+	Renderer = NULL;
 
 	// Step 7. Quit life
 	IMG_Quit();
