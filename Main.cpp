@@ -4,9 +4,8 @@
 #include <string>
 
 #ifndef G_CONST_GLOBAL_VARIABLES
-const int SCREEN_WIDTH = 933;
-const int SCREEN_HEIGHT = 923;
-const int KEY_PRESS_SURFACE_TOTAL = 4;
+const int SCREEN_WIDTH = 320*2;
+const int SCREEN_HEIGHT = 180*2;
 #endif G_CONST_GLOBAL_VARIABLES
 
 // Step 0. Declare our SDL Window and SDL Surfaces
@@ -27,91 +26,162 @@ void RenderSomeRectangles(SDL_Rect* Viewport);
 /* TODO: Create enums for multiple inputs (i.e. Jump => {Keycode, JoystickButton} = {SDLK_SPACEBAR, JOYSTICK_BUTTON_A} */
 #endif
 
+template <class T>
+class Vector2
+{
+public:
+	T x;
+	T y;
+public:
+	Vector2(T x, T y) {
+		this->x = x;
+		this->y = y;
+	}
+	void Clear()
+	{
+		this->x = 0;
+		this->y = 0;
+	}
+};
+
+class InputManager
+{
+public:
+	bool JumpButton, JumpButtonDown, JumpButtonUp;
+	bool PauseButton;
+	Vector2<float>* DirectionalInput;
+public:
+	InputManager()
+	{
+		JumpButton = JumpButtonDown = JumpButtonUp = false;
+		DirectionalInput = new Vector2<float>(0, 0);
+	}
+	~InputManager()
+	{
+		delete DirectionalInput;
+	}
+private:
+	void StoreKeyboardInput()
+	{
+		// Handle Keyboard Input
+		const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
+		if (currentKeyStates[SDL_SCANCODE_SPACE])
+		{
+			if (JumpButton == false)
+			{
+				JumpButtonDown = true;
+				JumpButton = true;
+			}
+		}
+		else if (JumpButton == true)
+		{
+			JumpButton = false;
+			JumpButtonUp = true;
+		}
+		if (currentKeyStates[SDL_SCANCODE_ESCAPE])
+		{
+			PauseButton = true;
+		}
+		else if (PauseButton = true)
+		{
+			PauseButton = false;
+		}
+		if (currentKeyStates[SDL_SCANCODE_A])
+		{
+			DirectionalInput->x = -1;
+		}
+		if (currentKeyStates[SDL_SCANCODE_D])
+		{
+			DirectionalInput->x = 1;
+		}
+		if (currentKeyStates[SDL_SCANCODE_W])
+		{
+			DirectionalInput->y = 1;
+		}
+		if (currentKeyStates[SDL_SCANCODE_S])
+		{
+			DirectionalInput->y = -1;
+		}
+	}
+public:
+	void Update()
+	{
+		// Clear select input from previous frame
+		DirectionalInput->Clear();
+		JumpButtonDown = JumpButtonUp = false;
+
+		// Handle Storing Keyboard Input
+		StoreKeyboardInput();
+	}
+};
+
 int main(int argc, char* argv[])
 {
 	if (Initialize())
 	{
+		InputManager input;
+		SDL_Event e;
 		CurrentTexture = LoadTexture("./assets/NickVallejosAlbumCover.png");
+		bool quit = false;
 
-		if (CurrentTexture != NULL)
+
+		// Main Game Loop
+		while (quit == false)
 		{
-			bool quit = false;
-
-			SDL_Event e;
-
-			// Main Game Loop
-			while (quit == false)
+			// Poll Event
+			while (SDL_PollEvent(&e) != 0)
 			{
-				while (SDL_PollEvent(&e) != 0)
+				switch (e.type)
 				{
-					switch (e.type)
+					case SDL_QUIT:
 					{
-						case SDL_QUIT:
-						{
-							quit = true;
-							break;
-						}
-						case SDL_KEYDOWN:
-						{
-							SDL_Keycode keycode = e.key.keysym.sym;
-							printf("Pressed key %s\n", SDL_GetKeyName(keycode));
-							switch (keycode)
-							{
-								case SDLK_DOWN:
-									break;
-								case SDLK_UP:
-									break;
-								case SDLK_LEFT:
-									break;
-								case SDLK_RIGHT:
-									break;
-								case SDLK_ESCAPE:
-									quit = true;
-									break;
-								default:
-									break;
-							}
-							break;
-						}
-						case SDL_JOYBUTTONDOWN:
-						{
-							printf("Pressed a button");
-							break;
-						}
-						default:
-						{
-							break;
-						}
+						quit = true;
+						break;
+					}
+					default:
+					{
+						break;
 					}
 				}
-
-				// Clear screen
-				SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-				SDL_RenderClear(Renderer);
-				
-				// Let's Create Viewport 1 and Set Renderer to Viewport1
-				SDL_Rect topLeftViewport = {0, 0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2}; // {origin x, origin y, width, height}
-				SDL_RenderSetViewport(Renderer, &topLeftViewport);
-				RenderSomeRectangles(&topLeftViewport);
-
-				// Viewport 2 - let's render an image
-				SDL_Rect topRightViewport = { SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
-				SDL_RenderSetViewport(Renderer, &topRightViewport);
-				SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
-
-				// Viewport 3 - Let's render rectangles over our image
-				SDL_Rect bottomViewport = { 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2 };
-				SDL_RenderSetViewport(Renderer, &bottomViewport);
-				SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
-				RenderSomeRectangles(&bottomViewport);
-
-				// Updates our screen
-				SDL_RenderPresent(Renderer);
 			}
-		}
-		else
-		{
-			printf("Failed to load texture!\n");
+
+			// Update Input
+			input.Update();
+			
+			if (input.PauseButton)
+			{
+				quit = true;
+			}
+			if (input.JumpButtonDown)
+			{
+				printf("JumpButtonDown\n");
+			}
+			if (input.JumpButtonUp) {
+				printf("JumpButtonUp\n");
+			}
+
+			// Clear screen
+			SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+			SDL_RenderClear(Renderer);
+				
+			// Let's Create Viewport 1 and Set Renderer to Viewport1
+			SDL_Rect topLeftViewport = {0, 0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2}; // {origin x, origin y, width, height}
+			SDL_RenderSetViewport(Renderer, &topLeftViewport);
+			RenderSomeRectangles(&topLeftViewport);
+
+			// Viewport 2 - let's render an image
+			SDL_Rect topRightViewport = { SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+			SDL_RenderSetViewport(Renderer, &topRightViewport);
+			SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
+
+			// Viewport 3 - Let's render rectangles over our image
+			SDL_Rect bottomViewport = { 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2 };
+			SDL_RenderSetViewport(Renderer, &bottomViewport);
+			SDL_RenderCopy(Renderer, CurrentTexture, NULL, NULL);
+			RenderSomeRectangles(&bottomViewport);
+
+			// Updates our screen
+			SDL_RenderPresent(Renderer);
 		}
 	}
 	else
