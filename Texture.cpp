@@ -76,9 +76,9 @@ namespace Nick
 	// Render the texture at (0,0) by calling render(Renderer, 0, 0)
 	// Check if the texture fits the screen
 	// If not, then this function needs to be passed in a SDL_Rect Viewport
-	void Texture::render(SDL_Renderer* renderer, int x, int y)
+	void Texture::render(SDL_Renderer* renderer, int x, int y, int resizeFactorX, int resizeFactorY)
 	{
-		SDL_Rect renderQuad = { x, y, width, height };
+		SDL_Rect renderQuad = { x * resizeFactorX, y * resizeFactorY, width * resizeFactorX, height * resizeFactorY };
 		SDL_RenderCopy(renderer, texture, NULL, &renderQuad);
 	}
 	

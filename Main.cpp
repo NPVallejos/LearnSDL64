@@ -7,8 +7,15 @@
 #include <string>
 
 #ifndef G_CONST_GLOBAL_VARIABLES
-const int SCREEN_WIDTH = 933/2;
-const int SCREEN_HEIGHT = 923/2;
+const int TARGET_RESOLUTION_X = 320;
+const int TARGET_RESOLUTION_Y = 180;
+const int CURRENT_RESOLUTION_X = 1600;
+const int CURRENT_RESOLUTION_Y = 900;
+const int MAX_RESIZE_MULTIPLIER_X = 6;
+const int MAX_RESIZE_MULTIPLIER_Y = 6;
+const int RESOLUTION_RATIO_X = CURRENT_RESOLUTION_X / TARGET_RESOLUTION_X;
+const int RESOLUTION_RATIO_Y = CURRENT_RESOLUTION_Y / TARGET_RESOLUTION_Y;
+const std::string WINDOW_TITLE = "LearnSDL64";
 #endif G_CONST_GLOBAL_VARIABLES
 
 // Step 0. Declare our SDL Window and SDL Surfaces
@@ -34,14 +41,14 @@ int main(int argc, char* argv[])
 		bool textureLoaded = false;
 
 		Nick::InputManager input;
-		Nick::Texture CurrentTexture;
+		Nick::Texture LevelTexture;
+		Nick::Texture PlayerTexture;
 		SDL_Event e;
 		
-		textureLoaded = CurrentTexture.LoadFromFile(Renderer, "./assets/NickVallejosAlbumCover.png");
-		
-		if (textureLoaded == false)
+		if (LevelTexture.LoadFromFile(Renderer, "./assets/320x180.png") == false 
+			|| PlayerTexture.LoadFromFile(Renderer, "./assets/player_16x16.png") == false)
 		{
-			printf("Texture did not load.");
+			quit = true;
 		}
 
 		// Main Game Loop
@@ -83,11 +90,13 @@ int main(int argc, char* argv[])
 			SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 			SDL_RenderClear(Renderer);
 			
-			if (textureLoaded) 
-				CurrentTexture.render(Renderer, 0, 0);
+			LevelTexture.render(Renderer, 0, 0, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
+			PlayerTexture.render(Renderer, 0, 0, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
+			PlayerTexture.render(Renderer, 16, 0, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
+			
 
 			// Let's Create Viewport 1 and Set Renderer to Viewport1
-			// SDL_Rect topLeftViewport = {0, 0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2}; // {origin x, origin y, width, height}
+			// SDL_Rect topLeftViewport = {0, 0, TARGET_RESOLUTION_X/2, TARGET_RESOLUTION_Y/2}; // {origin x, origin y, width, height}
 			// SDL_RenderSetViewport(Renderer, &topLeftViewport);
 
 			// Updates our screen
@@ -117,7 +126,7 @@ bool Initialize()
 	else
 	{
 		// Step 2. Initialize our SDL window
-		Window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		Window = SDL_CreateWindow(WINDOW_TITLE.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CURRENT_RESOLUTION_X, CURRENT_RESOLUTION_Y, SDL_WINDOW_SHOWN);
 
 		if (Window == NULL)
 		{

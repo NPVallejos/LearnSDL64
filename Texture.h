@@ -23,7 +23,7 @@ namespace Nick
 		// Delete texture
 		void free();
 		// Render texture to screen at (x,y)
-		void render(SDL_Renderer* renderer, int x, int y);
+		void render(SDL_Renderer* renderer, int x, int y, int resizeFactorX, int resizeFactorY);
 		// Get image dimensions
 		int getWidth();
 		int getHeight();
