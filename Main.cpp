@@ -4,6 +4,8 @@
 #include "SDL_image.h"
 #include "InputManager.h"
 #include "Texture.h"
+#include "Timer.h"
+#include "Animation.h"
 #include <string>
 
 #ifndef G_CONST_GLOBAL_VARIABLES
@@ -38,22 +40,34 @@ int main(int argc, char* argv[])
 	if (Initialize())
 	{
 		bool quit = false;
-		bool textureLoaded = false;
 
 		Nick::InputManager input;
 		Nick::Texture LevelTexture;
-		Nick::Texture PlayerTexture;
+		Nick::Texture PlayerSpriteSheet;
+
+		// Movement
+		int playerPosX = 32;
+		int playerPosY = 176 - (16 * 3);
+		int walkSpeed = 1;
+		int directionX = 0;
+		Nick::Vector2<int> velocity(0, 0);
+		float dt = 0.0f;
 		SDL_Event e;
+
 		
-		if (LevelTexture.LoadFromFile(Renderer, "./assets/320x180.png") == false 
-			|| PlayerTexture.LoadFromFile(Renderer, "./assets/player_16x16.png") == false)
+		if (LevelTexture.LoadFromFile(Renderer, "./assets/320x180.png") == false
+			|| PlayerSpriteSheet.LoadFromFile(Renderer, "./assets/player.png") == false)
 		{
 			quit = true;
 		}
 
+		Nick::Animation PlayerAnimation(&PlayerSpriteSheet, 16, 16);
+
 		// Main Game Loop
 		while (quit == false)
 		{
+			dt = Nick::Timer::GetInstance()->GetDeltaTime();
+
 			// Poll Event
 			while (SDL_PollEvent(&e) != 0)
 			{
@@ -80,27 +94,29 @@ int main(int argc, char* argv[])
 			}
 			if (input.JumpButtonDown)
 			{
-				printf("JumpButtonDown\n");
+				printf("%f\n", dt);
 			}
 			if (input.JumpButtonUp) {
-				printf("JumpButtonUp\n");
+				;
 			}
+			
+			velocity.x = input.DirectionalInput->x * walkSpeed;
+			directionX = (input.DirectionalInput->x > 0) ? 1 : -1;
+			playerPosX += velocity.x;
 
 			// Clear screen
-			SDL_SetRenderDrawColor(Renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+			SDL_SetRenderDrawColor(Renderer, 0xFF, 0x00, 0xFF, 0xFF);
 			SDL_RenderClear(Renderer);
 			
 			LevelTexture.render(Renderer, 0, 0, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
-			PlayerTexture.render(Renderer, 0, 0, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
-			PlayerTexture.render(Renderer, 16, 0, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
-			
-
-			// Let's Create Viewport 1 and Set Renderer to Viewport1
-			// SDL_Rect topLeftViewport = {0, 0, TARGET_RESOLUTION_X/2, TARGET_RESOLUTION_Y/2}; // {origin x, origin y, width, height}
-			// SDL_RenderSetViewport(Renderer, &topLeftViewport);
+			PlayerAnimation.Update(dt, Renderer, playerPosX, playerPosY, RESOLUTION_RATIO_X, RESOLUTION_RATIO_Y);
 
 			// Updates our screen
 			SDL_RenderPresent(Renderer);
+
+			Nick::Timer::GetInstance()->Tick();
+
+			// printf("Current FPS: %f\n", (1.0f / Nick::Timer::GetInstance()->GetDeltaTime()) );
 		}
 	}
 	else
@@ -136,7 +152,7 @@ bool Initialize()
 		else
 		{
 			// Step 3. Initialize our renderer
-			Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
+			Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 			if (Renderer == NULL)
 			{

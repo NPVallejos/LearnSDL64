@@ -16,6 +16,8 @@ namespace Nick
 	public:
 		// Default Constructor
 		Texture();
+		// Copy Constructor
+		Texture(Texture* other);
 		// Calls free()
 		~Texture();
 		// Set texture to image located at path
@@ -23,7 +25,7 @@ namespace Nick
 		// Delete texture
 		void free();
 		// Render texture to screen at (x,y)
-		void render(SDL_Renderer* renderer, int x, int y, int resizeFactorX, int resizeFactorY);
+		void render(SDL_Renderer* renderer, int x, int y, int resizeFactorX, int resizeFactorY, SDL_Rect* clip = NULL);
 		// Get image dimensions
 		int getWidth();
 		int getHeight();
